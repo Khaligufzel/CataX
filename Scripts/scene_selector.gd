@@ -6,7 +6,7 @@ var level_files : Array
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	dir_contents("user://levels")
+	dir_contents("./Mods/Core/Maps/")
 	
 	for level_file in level_files:
 		option_levels.add_item(level_file)
@@ -28,17 +28,20 @@ func dir_contents(path):
 		print("An error occurred when trying to access the path.")
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
-	pass
-
-
 func _on_view_level_pressed():
-	Helper.switch_level(level_files[option_levels.get_selected_id()])
+	Helper.switch_level(level_files[option_levels.get_selected_id()],Vector2(0,0))
 
-
+#When the play demo button is pressed
+#Create a new folder in the user directory
+#The name of the folder should be the current date and time so it's unique
+#This unique folder will contain save data for this game and can be loaded later
 func _on_play_demo_pressed():
-	Helper.switch_level("")
+	Helper.save_helper.create_new_save()
+	Helper.switch_level("Generichouse.json", Vector2(0, 0))
 
 func _on_help_button_pressed():
 	get_tree().change_scene_to_file("res://documentation.tscn")
+
+
+func _on_content_manager_button_button_up():
+	get_tree().change_scene_to_file("res://Scenes/ContentManager/contentmanager.tscn")
