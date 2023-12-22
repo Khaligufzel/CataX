@@ -6,9 +6,6 @@ func _ready():
 	load_documentation_files()
 	$CategoryTree.item_selected.connect(_on_CategoryTree_item_selected)
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
-	pass
 
 func load_documentation_files():
 	var resourceDir = "./Documentation"
@@ -65,11 +62,6 @@ func sanitize_filename(input: String) -> String:
 	var modifiedString = input.replace("_", " ")
 	modifiedString = modifiedString.replace(".md", "")
 	return modifiedString
-
-#This function will be called when the user clicks ona link in the documentation page
-func _on_document_display_meta_clicked(meta):
-	#Open the link in the default browser on the user's OS
-	OS.shell_open(str(meta))
 
 #When the user clicks on the back button, return to the main menu
 func _on_back_button_pressed():
