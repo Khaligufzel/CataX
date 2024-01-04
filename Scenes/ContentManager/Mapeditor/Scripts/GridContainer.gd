@@ -1,5 +1,5 @@
 extends GridContainer
-@onready var tileScene: PackedScene = preload("res://Scenes/ContentManager/Mapeditor/mapeditortile.tscn")
+@export var tileScene: PackedScene
 #This is the index of the level we are on. 0 is ground level. can be -10 to +10
 var currentLevel: int = 10
 #Contains the data of every tile in the current level, the ground level or level 0 by default
@@ -8,6 +8,9 @@ var currentLevelData: Array[Dictionary] = []
 @export var LevelScrollBar: VScrollBar
 @export var levelgrid_below: GridContainer
 @export var levelgrid_above: GridContainer
+@export var mapScrollWindow: ScrollContainer
+@export var brushPreviewTexture: TextureRect
+@export var buttonRotateRight: Button
 var selected_brush: Control
 
 var drawRectangle: bool = false
@@ -15,18 +18,19 @@ var erase: bool = false
 var showBelow: bool = false
 var showAbove: bool = false
 var snapAmount: float
+var defaultMapData: Dictionary = {"mapwidth": 32, "mapheight": 32, "levels": [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]}
+var rotationAmount: int = 0
 #Contains map metadata like size as well as the data on all levels
-var mapData: Dictionary = {"mapwidth": 32, "mapheight": 32, "levels": [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]}:
+var mapData: Dictionary = defaultMapData.duplicate():
 	set(data):
-		mapData = data.duplicate()
+		if data.is_empty():
+			mapData = defaultMapData.duplicate()
+		else:
+			mapData = data.duplicate()
 		loadLevelData(currentLevel)
 signal zoom_level_changed(zoom_level: int)
 
 func _on_mapeditor_ready():
-#	mapEditor = $"../../../../../../.."
-#	LevelScrollBar = $"../../../../Levelscroller/LevelScrollbar"
-#	levelgrid_below = $"../Level_Below"
-#	levelgrid_above = $"../Level_Above"
 	columns = mapEditor.mapWidth
 	levelgrid_below.columns = mapEditor.mapWidth
 	levelgrid_above.columns = mapEditor.mapWidth
@@ -34,7 +38,7 @@ func _on_mapeditor_ready():
 	snapAmount = 1.28*mapEditor.zoom_level
 	levelgrid_below.hide()
 	levelgrid_above.hide()
-
+	_on_zoom_level_changed(mapEditor.zoom_level)
 
 # This function will fill fill this GridContainer with a grid of 32x32 instances of "res://Scenes/ContentManager/Mapeditor/mapeditortile.tscn"
 func createTiles():
@@ -50,15 +54,24 @@ func createTiles():
 			tileAbove.set_clickable(false)
 			levelgrid_above.add_child(tileAbove)
 
-	
 var start_point = Vector2()
 var end_point = Vector2()
 var is_drawing = false
-var mouse_button_pressed: bool = false
 var snapLevel: Vector2 = Vector2(snapAmount, snapAmount).round()
 
 #When the user presses and holds the middle mousebutton and moves the mouse, change the parent's scroll_horizontal and scroll_vertical properties appropriately
 func _input(event):
+	#The mapeditor may be invisible if the user selects another tab in the content editor
+	if !mapEditor.visible:
+		return
+	
+	# Convert the mouse position to MapScrollWindow's local coordinate system
+	var local_mouse_pos = mapScrollWindow.get_local_mouse_position()
+	var mapScrollWindowRect = mapScrollWindow.get_rect()
+	# Check if the mouse is within the MapScrollWindow's rect
+	if !mapScrollWindowRect.has_point(local_mouse_pos):
+		return
+	
 	if event is InputEventMouseButton:
 		match event.button_index:
 			MOUSE_BUTTON_WHEEL_UP:
@@ -76,53 +89,74 @@ func _input(event):
 				if Input.is_key_pressed(KEY_CTRL) or Input.is_key_pressed(KEY_ALT):
 					get_viewport().set_input_as_handled()
 			MOUSE_BUTTON_LEFT:
-				if drawRectangle:
-					if event.is_pressed():
-						start_point = event.global_position.snapped(snapLevel)
-						is_drawing = true
-					else:
-						end_point = event.global_position.snapped(snapLevel)
-						is_drawing = false
-						paint_in_rectangle()
+				if event.is_pressed():
+					is_drawing = true
+					start_point = event.global_position.snapped(snapLevel)
 				else:
+					end_point = event.global_position.snapped(snapLevel)
+					if is_drawing == true:
+						if drawRectangle:
+							paint_in_rectangle()
+					unhighlight_tiles()
 					is_drawing = false
-	
+
 	#When the users presses and holds the mouse wheel, we scoll the grid
 	if event is InputEventMouseMotion:
+		end_point = event.global_position
 		if is_drawing:
-			end_point = event.global_position
-			update_rectangle()
+			if drawRectangle:
+				update_rectangle()
+				
+		# Calculate new position for the brush preview
+		var new_position = event.position + brushPreviewTexture.get_rect().size / 2
+		# Get the boundaries of the mapScrollWindow
+		var scroll_global_pos = mapScrollWindow.get_global_position()
+		# Clamp the new position to the mapScrollWindow's boundaries
+		new_position.x = clamp(new_position.x, scroll_global_pos.x, scroll_global_pos.x + mapScrollWindowRect.size.x - brushPreviewTexture.get_rect().size.x)
+		new_position.y = clamp(new_position.y, scroll_global_pos.y, scroll_global_pos.y + mapScrollWindowRect.size.y - brushPreviewTexture.get_rect().size.y)
+		# Update the position of the brush preview
+		brushPreviewTexture.global_position = new_position
 
-#Change the color to be red
+# Highlight tiles that are in the rectangle that the user has drawn with the mouse
 func update_rectangle():
-	if is_drawing:
+	if is_drawing and drawRectangle:
 		highlight_tiles_in_rect()
-	else:
-		unhighlight_tiles()
 
 #When one of the grid tiles is clicked, we paint the tile accordingly
 func grid_tile_clicked(clicked_tile):
-	paint_single_tile(clicked_tile)
-		
+	if is_drawing:
+		paint_single_tile(clicked_tile)
+
 #We paint a single tile if draw rectangle is not selected
 # Either erase the tile or paint it if a brush is selected.
 func paint_single_tile(clicked_tile):
-	if drawRectangle:
+	if drawRectangle or !clicked_tile:
 		return
 	if erase:
-		clicked_tile.set_default()
+		if selected_brush:
+			if selected_brush.entityType == "mob":
+				clicked_tile.set_mob_id("")
+			else:
+				clicked_tile.set_tile_id("")
+				clicked_tile.set_rotation_amount(0)
+		else:
+			clicked_tile.set_default()
 	elif selected_brush:
-		clicked_tile.set_texture(selected_brush.get_texture())
-	
+		if selected_brush.entityType == "mob":
+			clicked_tile.set_mob_id(selected_brush.tileID)
+		else:
+			clicked_tile.set_tile_id(selected_brush.tileID)
+			clicked_tile.set_rotation_amount(rotationAmount)
+
 #When this function is called, loop over all the TileGrid's children and get the tileData property. Store this data in the currentLevelData array
 func storeLevelData():
 	currentLevelData.clear()
 	for child in get_children():
 		currentLevelData.append(child.tileData)
 	mapData.levels[currentLevel] = currentLevelData.duplicate()
-		
-#Loads the leveldata from the mapdata
-#If no data exists, use the default to create a new map
+
+# Loads the leveldata from the mapdata
+# If no data exists, use the default to create a new map
 func loadLevelData(newLevel: int):
 	if newLevel > 0 and showBelow:
 		levelgrid_below.show()
@@ -137,8 +171,11 @@ func loadLevelData(newLevel: int):
 	else:
 		levelgrid_above.hide()
 	loadLevel(newLevel, self)
-			
+
 func loadLevel(level: int, grid: GridContainer):
+	if mapData.is_empty():
+		print_debug("Tried to load data from an empty mapData dictionary")
+		return;
 	var newLevelData: Array = mapData.levels[level]
 	var i: int = 0
 	# If any data exists on this level, we load it
@@ -165,7 +202,7 @@ func change_level(newlevel: int) -> void:
 # We need to add 10 since the scrollbar starts at -10
 func _on_level_scrollbar_value_changed(value):
 	change_level(10+0-value)
-	
+
 #This function takes two coordinates representing a rectangle. It will check which of the TileGrid's children's position falls inside this rectangle. It returns all the child tiles that fall inside this rectangle
 func get_tiles_in_rectangle(rect_start: Vector2, rect_end: Vector2) -> Array:
 	var tiles_in_rectangle: Array = []
@@ -174,17 +211,17 @@ func get_tiles_in_rectangle(rect_start: Vector2, rect_end: Vector2) -> Array:
 			if tile.global_position.y >= rect_start.y-(1*mapEditor.zoom_level) and tile.global_position.y <= rect_end.y:
 				tiles_in_rectangle.append(tile)
 	return tiles_in_rectangle
-	
+
 func unhighlight_tiles():
 	for tile in get_children():
 		tile.unhighlight()
-	
+
 func highlight_tiles_in_rect():
 	unhighlight_tiles()
 	var tiles: Array = get_tiles_in_rectangle(start_point, end_point)
 	for tile in tiles:
 		tile.highlight()
-		
+
 #Paint every tile in the selected rectangle
 #We always erase if erase is selected, even if no brush is selected
 #Only paint if a brush is selected and erase is false
@@ -195,7 +232,7 @@ func paint_in_rectangle():
 			tile.set_default()
 	elif selected_brush:
 		for tile in tiles:
-			tile.set_texture(selected_brush.get_texture())
+			tile.set_tile_id(selected_brush.tileID)
 	update_rectangle()
 
 #The user has pressed the erase toggle button in the editor
@@ -207,49 +244,14 @@ func _on_draw_rectangle_toggled(button_pressed):
 
 func _on_tilebrush_list_tile_brush_selection_change(tilebrush):
 	selected_brush = tilebrush
-	
-	
+	update_preview_texture()
 
-#This function takes the TileGrid.mapData property and saves all of it as a json file. The user will get a prompt asking for a file location.
-func _on_save_button_button_up():
-	var folderName: String = "./Mods/Core"
-	var fileName: String = "Generichouse.json"
-	var saveLoc: String = folderName + "/Maps" + "/" + fileName
-	# Convert the TileGrid.mapData to a JSON string
-	storeLevelData()
-	var map_data_json = str(mapData.duplicate())
-
-	var dir = DirAccess.open(folderName)
-	dir.make_dir("Maps")
-
-	# Save the JSON string to the selected file location
-	var file = FileAccess.open(saveLoc, FileAccess.WRITE)
-	if file:
-		file.store_string(map_data_json)
+func update_preview_texture():
+	if selected_brush:
+		brushPreviewTexture.texture = selected_brush.get_texture()
+		brushPreviewTexture.visible = true
 	else:
-		print_debug("Unable to write file " + saveLoc)
-
-func _on_load_button_button_up():	
-	var folderName: String = "./Mods/Core"
-	var fileName: String = "Generichouse.json"
-	var loadLoc: String = folderName + "/Maps" + "/" + fileName
-	# Convert the tileGrid.mapData to a JSON string
-	storeLevelData()
-
-	var dir = DirAccess.open(folderName)
-	dir.make_dir("Maps")
-
-	# Save the JSON string to the selected file location
-	var file = FileAccess.open(loadLoc, FileAccess.READ)
-	if file:
-		var map_data_json: Dictionary
-		map_data_json = JSON.parse_string(file.get_as_text())
-		mapData = map_data_json
-
-	else:
-		print_debug("Unable to load file " + loadLoc)
-	
-
+		brushPreviewTexture.visible = false
 
 func _on_show_below_toggled(button_pressed):
 	showBelow = button_pressed
@@ -258,10 +260,42 @@ func _on_show_below_toggled(button_pressed):
 	else:
 		levelgrid_below.hide()
 
-
 func _on_show_above_toggled(button_pressed):
 	showAbove = button_pressed
 	if showAbove:
 		levelgrid_above.show()
 	else:
 		levelgrid_above.hide()
+
+#This function takes the mapData property and saves all of it as a json file.
+func save_map_json_file():
+	# Convert the TileGrid.mapData to a JSON string
+	storeLevelData()
+	var map_data_json = JSON.stringify(mapData.duplicate(), "\t")
+	Helper.json_helper.write_json_file(mapEditor.contentSource, map_data_json)
+
+func load_map_json_file():
+	var fileToLoad: String = mapEditor.contentSource
+	mapData = Helper.json_helper.load_json_dictionary_file(fileToLoad)
+
+
+func _on_zoom_level_changed(zoom_level: int):
+	# Calculate the new scale based on zoom level
+	var scale_factor = zoom_level * 0.01 
+	brushPreviewTexture.scale = Vector2(scale_factor, scale_factor)
+	brushPreviewTexture.pivot_offset = brushPreviewTexture.size / 2
+	for tile in get_children():
+		tile.set_scale_amount(1.28*zoom_level)
+	for tile in levelgrid_below.get_children():
+		tile.set_scale_amount(1.28*zoom_level)
+	for tile in levelgrid_above.get_children():
+		tile.set_scale_amount(1.28*zoom_level)
+	
+
+# When the user releases the mouse button on the rotate right button
+func _on_rotate_right_button_up():
+	rotationAmount += 90
+	rotationAmount = rotationAmount % 360 # Keep rotation within 0-359 degrees
+	buttonRotateRight.text = str(rotationAmount)
+	brushPreviewTexture.rotation_degrees = rotationAmount
+	brushPreviewTexture.pivot_offset = brushPreviewTexture.size / 2
