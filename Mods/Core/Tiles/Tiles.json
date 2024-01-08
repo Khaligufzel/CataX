@@ -1,0 +1,188 @@
+[
+	{
+		"categories": [
+			"Ground"
+		],
+		"description": "Field of grass",
+		"id": "grass_plain",
+		"name": "Plain grass",
+		"shape": "cube",
+		"sprite": "1.png"
+	},
+	{
+		"categories": [
+			"Floor"
+		],
+		"description": "The floor is old and the boards are crooked",
+		"id": "floor_wood_shabby_00",
+		"name": "Low quality wood floor",
+		"shape": "cube",
+		"sprite": "woodboards.png"
+	},
+	{
+		"categories": [
+			"Floor"
+		],
+		"description": "The floor is old and the boards are crooked",
+		"id": "floor_wood_shabby_01",
+		"name": "Low quality wood floor",
+		"sprite": "woodboards1.png"
+	},
+	{
+		"categories": [
+			"Floor"
+		],
+		"description": "The floor is old and the boards are crooked",
+		"id": "floor_wood_shabby_02",
+		"name": "Low quality wood floor",
+		"sprite": "woodboards2.png"
+	},
+	{
+		"categories": [
+			"Floor"
+		],
+		"description": "The floor is old and the boards are crooked",
+		"id": "floor_wood_shabby_dark_00",
+		"name": "Low quality wood floor",
+		"sprite": "woodboards3.png"
+	},
+	{
+		"categories": [
+			"Floor"
+		],
+		"description": "The floor is old and the boards are crooked",
+		"id": "floor_wood_shabby_dark_01",
+		"name": "Low quality wood floor",
+		"sprite": "woodboards4.png"
+	},
+	{
+		"categories": [
+			"Floor"
+		],
+		"description": "The floor is old and the boards are crooked",
+		"id": "floor_wood_shabby_dark_02",
+		"name": "Low quality wood floor",
+		"sprite": "woodboards5.png"
+	},
+	{
+		"categories": [
+			"Road"
+		],
+		"description": "A smooth surface for vehicles to drive on",
+		"id": "road_asphalt_basic",
+		"name": "Basic asphalt road",
+		"sprite": "asphalt_basic.png"
+	},
+	{
+		"categories": [
+			"Road"
+		],
+		"description": "A smooth surface for vehicles to drive on. It has diagonal markings",
+		"id": "road_asphalt_diagonal",
+		"name": "Asphalt road with diagonal markings",
+		"sprite": "asphalt_diag_middle.png"
+	},
+	{
+		"categories": [
+			"Road"
+		],
+		"description": "A smooth surface for vehicles to drive on. It has markings indicating a north turn",
+		"id": "road_asphalt_turn_north",
+		"name": "Asphalt road with markings turning north",
+		"sprite": "asphalt_middle_downleft.png"
+	},
+	{
+		"categories": [
+			"Road"
+		],
+		"description": "A smooth surface for vehicles to drive on. It has horizontal markings",
+		"id": "road_asphalt_horizontal",
+		"name": "Asphalt road with horizontal markings",
+		"sprite": "asphalt_middle_horizontal.png"
+	},
+	{
+		"categories": [
+			"Floor",
+			"Urban"
+		],
+		"description": "A stone floor wihere the stones are shaped like an arch. Used in an urban environement.",
+		"id": "arc_stones_floor",
+		"name": "Arc stones floor",
+		"sprite": "arcstones.png"
+	},
+	{
+		"categories": [
+			"Ground"
+		],
+		"description": "Field of grass",
+		"id": "grass_plain_01",
+		"name": "Plain grass",
+		"sprite": "basegrass1.png"
+	},
+	{
+		"categories": [
+			"Slopes",
+			"Urban"
+		],
+		"description": "Wooden stairs that allow you to move up and down",
+		"id": "wood_stairs",
+		"name": "Wooden stairs",
+		"shape": "slope",
+		"sprite": "4.png"
+	},
+	{
+		"categories": [
+			"Urban",
+			"Wall"
+		],
+		"description": "A solid wall made out of bricks",
+		"id": "brick_wall_00",
+		"name": "Brick wall",
+		"shape": "cube",
+		"sprite": "brickroad2.png"
+	},
+	{
+		"categories": [
+			"Floor",
+			"Urban"
+		],
+		"description": "A warm red carpet",
+		"id": "red_carpet_00",
+		"name": "Red carpet",
+		"shape": "cube",
+		"sprite": "redcarpet.png"
+	},
+	{
+		"categories": [
+			"Floor",
+			"Urban"
+		],
+		"description": "A warm blue carpet",
+		"id": "blue_carpet_00",
+		"name": "Blue carpet",
+		"shape": "cube",
+		"sprite": "bluecarpet.png"
+	},
+	{
+		"categories": [
+			"Floor",
+			"Urban"
+		],
+		"description": "A warm orange carpet",
+		"id": "orange_carpet_00",
+		"name": "Orange carpet",
+		"shape": "cube",
+		"sprite": "browncarpet.png"
+	},
+	{
+		"categories": [
+			"Floor",
+			"Urban"
+		],
+		"description": "A road made out of stones shaped like a beehive",
+		"id": "beehive_stones_00",
+		"name": "Beehive stones",
+		"shape": "cube",
+		"sprite": "beehive1.png"
+	}
+]
