@@ -107,7 +107,8 @@ func load_furniture_data():
 	if not dfurniture.destruction.get_data().is_empty():
 		canDestroyCheckbox.button_pressed = true
 		destructionTextEdit.set_text(dfurniture.destruction.group)
-		destructionImageDisplay.texture = Gamedata.furnitures.sprite_by_file(dfurniture.destruction.sprite)
+		if not dfurniture.destruction.sprite == "":
+			destructionImageDisplay.texture = Gamedata.furnitures.sprite_by_file(dfurniture.destruction.sprite)
 		destructionSpriteNameLabel.text = dfurniture.destruction.sprite
 		set_visibility_for_children(destructionTextEdit, true)
 	else:
@@ -209,6 +210,7 @@ func update_sprite_texture_rect(texture: Texture):
 # This function takes all data from the form elements and stores them in the dfurniture.
 func _on_save_button_button_up():
 	dfurniture.spriteid = imageNameStringLabel.text
+	dfurniture.sprite = furnitureImageDisplay.texture
 	dfurniture.name = NameTextEdit.text
 	dfurniture.description = DescriptionTextEdit.text
 	dfurniture.categories = CategoriesList.get_items()
