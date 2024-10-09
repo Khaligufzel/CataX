@@ -179,8 +179,6 @@ func populate_container_from_itemgroup() -> String:
 		var itemgroups_array = furnitureJSON["itemgroups"]
 		if itemgroups_array.size() > 0:
 			return itemgroups_array.pick_random()
-		else:
-			print_debug("itemgroups array is empty in furnitureJSON")
 	
 	# Fallback to using itemgroup from furnitureJSONData if furnitureJSON.itemgroups does not exist
 	var myitemgroup = dfurniture.function.container_group
@@ -550,6 +548,7 @@ func can_be_disassembled() -> bool:
 func create_loot():
 	itemgroup = populate_container_from_itemgroup()
 	if not itemgroup or itemgroup == "":
+		_on_item_removed(null)
 		return
 	# A flag to track whether items were added
 	var item_added: bool = false
@@ -569,7 +568,7 @@ func create_loot():
 		container_material = Gamedata.materials.container_filled  # Use filled container material
 		container_sprite_mesh.material = container_material  # Update the mesh material
 	else:
-		# If no item was added we delete the container if it's not a child of some furniture
+		# If no item was added we set the sprite to an empty container
 		_on_item_removed(null)
 
 
